@@ -83,7 +83,7 @@ func cleanRequest(request *http.Request) {
 	if request == nil {
 		return
 	}
-	request.Header.Del(headerXPublic)
+
 	request.Header.Del(headerXClientID)
 	request.Header.Del(headerXCallerID)
 }
