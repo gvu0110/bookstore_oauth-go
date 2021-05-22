@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/gvu0110/bookstore_oauth-go/oauth/errors"
+	"github.com/gvu0110/bookstore_utils-go/rest_errors"
 )
 
 const (
@@ -57,7 +57,7 @@ func IsPublic(request *http.Request) bool {
 	return request.Header.Get(headerXPublic) == "true"
 }
 
-func AuthenticateRequest(request *http.Request) *errors.RESTError {
+func AuthenticateRequest(request *http.Request) *rest_errors.RESTError {
 	if request == nil {
 		return nil
 	}
@@ -88,27 +88,27 @@ func cleanRequest(request *http.Request) {
 	request.Header.Del(headerXCallerID)
 }
 
-func getAccessToken(accessTokenID string) (*accessToken, *errors.RESTError) {
+func getAccessToken(accessTokenID string) (*accessToken, *rest_errors.RESTError) {
 	response, err := restClient.R().
 		SetHeader("Content-Type", "application/json").
 		Post(fmt.Sprintf("https://localhost:8080/oauth/access_token/%s", accessTokenID))
 
 	// Timeout
 	if err != nil {
-		return nil, errors.NewInternalServerRESTError("Invalid RESTClient response when trying to get access token")
+		return nil, rest_errors.NewInternalServerRESTError("Invalid RESTClient response when trying to get access token", err)
 	}
 
 	if response.StatusCode() > 299 {
-		var restErr errors.RESTError
+		var restErr rest_errors.RESTError
 		if err := json.Unmarshal(response.Body(), &restErr); err != nil {
-			return nil, errors.NewInternalServerRESTError("Invalid error interface then trying to get access token")
+			return nil, rest_errors.NewInternalServerRESTError("Invalid error interface then trying to get access token", err)
 		}
 		return nil, &restErr
 	}
 
 	var at accessToken
 	if err := json.Unmarshal(response.Body(), &at); err != nil {
-		return nil, errors.NewInternalServerRESTError("Error when trying to unmarshall access token response")
+		return nil, rest_errors.NewInternalServerRESTError("Error when trying to unmarshall access token response", err)
 	}
 	return &at, nil
 }
