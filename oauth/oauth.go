@@ -12,10 +12,11 @@ import (
 )
 
 const (
-	headerXPublic    = "X-Public"
-	headerXClientID  = "X-Client-ID"
-	headerXCallerID  = "X-Caller-ID"
-	paramAccessToken = "access_token"
+	headerXPublic               = "X-Public"
+	headerXClientID             = "X-Client-ID"
+	headerXCallerID             = "X-Caller-ID"
+	paramAccessToken            = "access_token"
+	OauthAccessTokenAPIEndpoint = "https://localhost:8080/oauth/access_token"
 )
 
 var (
@@ -57,7 +58,7 @@ func IsPublic(request *http.Request) bool {
 	return request.Header.Get(headerXPublic) == "true"
 }
 
-func AuthenticateRequest(request *http.Request) *rest_errors.RESTError {
+func AuthenticateRequest(request *http.Request) rest_errors.RESTError {
 	if request == nil {
 		return nil
 	}
@@ -80,15 +81,11 @@ func AuthenticateRequest(request *http.Request) *rest_errors.RESTError {
 }
 
 func cleanRequest(request *http.Request) {
-	if request == nil {
-		return
-	}
-
 	request.Header.Del(headerXClientID)
 	request.Header.Del(headerXCallerID)
 }
 
-func getAccessToken(accessTokenID string) (*accessToken, *rest_errors.RESTError) {
+func getAccessToken(accessTokenID string) (*accessToken, rest_errors.RESTError) {
 	response, err := restClient.R().
 		SetHeader("Content-Type", "application/json").
 		Post(fmt.Sprintf("https://localhost:8080/oauth/access_token/%s", accessTokenID))
@@ -99,11 +96,11 @@ func getAccessToken(accessTokenID string) (*accessToken, *rest_errors.RESTError)
 	}
 
 	if response.StatusCode() > 299 {
-		var restErr rest_errors.RESTError
-		if err := json.Unmarshal(response.Body(), &restErr); err != nil {
+		restErr, err := rest_errors.NewRESTErrorFromBytes(response.Body())
+		if err != nil {
 			return nil, rest_errors.NewInternalServerRESTError("Invalid error interface then trying to get access token", err)
 		}
-		return nil, &restErr
+		return nil, restErr
 	}
 
 	var at accessToken
