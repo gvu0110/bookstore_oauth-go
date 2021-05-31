@@ -88,7 +88,7 @@ func cleanRequest(request *http.Request) {
 func getAccessToken(accessTokenID string) (*accessToken, rest_errors.RESTError) {
 	response, err := restClient.R().
 		SetHeader("Content-Type", "application/json").
-		Post(fmt.Sprintf("https://localhost:8080/oauth/access_token/%s", accessTokenID))
+		Get(fmt.Sprintf("http://localhost:8080/oauth/access_token/%s", accessTokenID))
 
 	// Timeout
 	if err != nil {
